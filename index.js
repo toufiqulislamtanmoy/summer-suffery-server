@@ -32,6 +32,11 @@ async function run() {
     await client.connect();
     const usersCollections = client.db("summer-suffery").collection("users");
 
+    app.get("/users", async(req,res)=>{
+      const result = await usersCollections.find().toArray();
+      res.send(result);
+    } )
+
     app.post("/users", async (req, res) => {
       const userDetails = req.body;
       const query = { email: userDetails.email };
