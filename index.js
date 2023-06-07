@@ -30,6 +30,18 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const usersCollections = client.db("summer-suffery").collection("users");
+
+    app.post("/users", async (req, res) => {
+      const userDetails = req.body;
+      const query = { email: userDetails.email };
+      const existingUser = await usersCollections.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "User Already Exist" });
+      }
+      const result = await usersCollections.insertOne(userDetails);
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -42,5 +54,5 @@ run().catch(console.dir);
 
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`)
-  })
+  console.log(`Server is running on port ${port}`)
+})
