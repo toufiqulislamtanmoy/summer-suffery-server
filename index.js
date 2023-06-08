@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 5000
 
@@ -38,7 +38,7 @@ async function run() {
       const result = await usersCollections.find().toArray();
       res.send(result);
     } )
-    // single user email query
+    // single user email query for checking user role
     app.get("/users/:email", async(req,res)=>{
       const email = req.params.email;
       const query = {email: email}
@@ -67,10 +67,25 @@ async function run() {
       res.send(result);
     })
     /*********************  This selected classes api  start***************/
+    // get selected class by email 
+    app.get('/selectedClass', async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      const query = {email:email}
+      const result = await selectedClassCollections.find(query).toArray();
+      res.send(result);
+    })
+    // add selected class 
     app.post('/selectedClass', async (req, res) => {
       const course = req.body;
-      console.log(course);
       const result = await selectedClassCollections.insertOne(course);
+      res.send(result);
+    })
+    // Delete Selected Items
+    app.delete('/selectedClass/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await selectedClassCollections.deleteOne(query);
       res.send(result);
     })
     /*********************  This selected classes api  end***************/
