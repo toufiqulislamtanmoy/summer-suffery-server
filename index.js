@@ -33,18 +33,18 @@ async function run() {
     const usersCollections = client.db("summer-suffery").collection("users");
     const classessCollections = client.db("summer-suffery").collection("classess");
     const selectedClassCollections = client.db("summer-suffery").collection("selectedClass");
-/*********************  This all are the user api  start***************/
-    app.get("/users", async(req,res)=>{
+    /*********************  This all are the user api  start***************/
+    app.get("/users", async (req, res) => {
       const result = await usersCollections.find().toArray();
       res.send(result);
-    } )
+    })
     // single user email query for checking user role
-    app.get("/users/:email", async(req,res)=>{
+    app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email: email}
+      const query = { email: email }
       const result = await usersCollections.findOne(query);
       res.send(result);
-    } )
+    })
 
     // create user
     app.post("/users", async (req, res) => {
@@ -60,9 +60,9 @@ async function run() {
 
     /*********************  This all are the user api  end***************/
 
-   /*********************  This all are the class api  start***************/
+    /*********************  This all are the class api  start***************/
 
-    app.get("/classes", async (req,res)=>{
+    app.get("/classes", async (req, res) => {
       const result = await classessCollections.find().toArray();
       res.send(result);
     })
@@ -71,7 +71,7 @@ async function run() {
     app.get('/selectedClass', async (req, res) => {
       const email = req.query.email;
       console.log(email);
-      const query = {email:email}
+      const query = { email: email }
       const result = await selectedClassCollections.find(query).toArray();
       res.send(result);
     })
@@ -84,13 +84,26 @@ async function run() {
     // Delete Selected Items
     app.delete('/selectedClass/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await selectedClassCollections.deleteOne(query);
       res.send(result);
     })
     /*********************  This selected classes api  end***************/
 
 
+    /*********************  This make admin ***************/
+
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin"
+        },
+      };
+      const result = await usersCollections.updateOne(filter, updateDoc);
+      res.send(result);
+    })
     /*********************  This all are the user api  end***************/
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
