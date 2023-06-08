@@ -31,9 +31,17 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const usersCollections = client.db("summer-suffery").collection("users");
-
+    const classessCollections = client.db("summer-suffery").collection("classess");
+// This all are the user api
     app.get("/users", async(req,res)=>{
       const result = await usersCollections.find().toArray();
+      res.send(result);
+    } )
+    // single user email query
+    app.get("/users/:email", async(req,res)=>{
+      const email = req.params.email;
+      const query = {email: email}
+      const result = await usersCollections.findOne(query);
       res.send(result);
     } )
 
@@ -45,6 +53,13 @@ async function run() {
         return res.send({ message: "User Already Exist" });
       }
       const result = await usersCollections.insertOne(userDetails);
+      res.send(result);
+    })
+
+    // This all are the classes api
+
+    app.get("/classes", async (req,res)=>{
+      const result = await classessCollections.find().toArray();
       res.send(result);
     })
     // Send a ping to confirm a successful connection
