@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -38,6 +39,15 @@ async function run() {
       const result = await usersCollections.find().toArray();
       res.send(result);
     })
+
+    /**********Generate JWT token*********/
+
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.SECRECT_TOKEN, { expiresIn: "1h" });
+      res.send({ token });
+    })
+
     // single user email query for checking user role
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -91,7 +101,7 @@ async function run() {
     /*********************  This selected classes api  end***************/
 
 
-    /*********************  This make admin ***************/
+    /*********************  make admin ***************/
 
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
@@ -99,6 +109,19 @@ async function run() {
       const updateDoc = {
         $set: {
           role: "admin"
+        },
+      };
+      const result = await usersCollections.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    /*********************  make instructor ***************/
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "instructor"
         },
       };
       const result = await usersCollections.updateOne(filter, updateDoc);
