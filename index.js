@@ -32,7 +32,8 @@ async function run() {
     await client.connect();
     const usersCollections = client.db("summer-suffery").collection("users");
     const classessCollections = client.db("summer-suffery").collection("classess");
-// This all are the user api
+    const selectedClassCollections = client.db("summer-suffery").collection("selectedClass");
+/*********************  This all are the user api  start***************/
     app.get("/users", async(req,res)=>{
       const result = await usersCollections.find().toArray();
       res.send(result);
@@ -45,6 +46,7 @@ async function run() {
       res.send(result);
     } )
 
+    // create user
     app.post("/users", async (req, res) => {
       const userDetails = req.body;
       const query = { email: userDetails.email };
@@ -56,12 +58,25 @@ async function run() {
       res.send(result);
     })
 
-    // This all are the classes api
+    /*********************  This all are the user api  end***************/
+
+   /*********************  This all are the class api  start***************/
 
     app.get("/classes", async (req,res)=>{
       const result = await classessCollections.find().toArray();
       res.send(result);
     })
+    /*********************  This selected classes api  start***************/
+    app.post('/selectedClass', async (req, res) => {
+      const course = req.body;
+      console.log(course);
+      const result = await selectedClassCollections.insertOne(course);
+      res.send(result);
+    })
+    /*********************  This selected classes api  end***************/
+
+
+    /*********************  This all are the user api  end***************/
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
