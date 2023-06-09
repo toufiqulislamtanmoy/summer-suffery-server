@@ -134,7 +134,7 @@ async function run() {
    
     /*********************  This selected classes api  start***************/
 
-    app.get("/selectedClass/:id",async (req,res) => {
+    app.get("/selectedClass/:id",verifyJWT,async (req,res) => {
       const id = req.params.id;
       const quary = {_id: new  ObjectId(id)}
       const result = await selectedClassCollections.findOne(quary);
