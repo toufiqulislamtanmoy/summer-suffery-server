@@ -52,6 +52,7 @@ async function run() {
     const usersCollections = client.db("summer-suffery").collection("users");
     const classessCollections = client.db("summer-suffery").collection("classess");
     const selectedClassCollections = client.db("summer-suffery").collection("selectedClass");
+    const paymentsCollections = client.db("summer-suffery").collection("payments");
     /**********Generate JWT token*********/
 
     app.post('/jwt', (req, res) => {
@@ -97,6 +98,10 @@ async function run() {
     /*********************  This all are the user api  start***************/
     app.get("/users",verifyJWT,verifyAdmin, async (req, res) => {
       const result = await usersCollections.find().toArray();
+      res.send(result);
+    })
+    app.get("/instructor", async (req, res) => {
+      const result = await usersCollections.find({ role: "instructor" }).toArray();
       res.send(result);
     })
 
@@ -209,6 +214,22 @@ async function run() {
       });
     })
 
+    // payment info data post api
+
+    app.post('/payments', verifyJWT, async(req, res) =>{
+      const paymentInfo = req.body;
+      const insertResult = await  paymentsCollections.insertOne(paymentInfo);
+      const updateResult = await classessCollections.updateOne(
+        { _id: new ObjectId(paymentInfo.classId) }, 
+        { $inc: { seats: -1, enrollStudent: 1 } } 
+      );
+
+      const deleteResult = await selectedClassCollections.deleteOne(
+        { _id: new ObjectId(paymentInfo.selectedClassID) } // Specify the filter criteria
+      );
+
+      res.send({ insertResult,updateResult,deleteResult });
+    })
 
 
     // Send a ping to confirm a successful connection
