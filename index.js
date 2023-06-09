@@ -17,7 +17,7 @@ const verifyJWT = (req, res, next) => {
   }
   const token = authorization.split(' ')[1];
   jwt.verify(token, process.env.SECRECT_TOKEN, (err, decoded) => {
-    
+
     if (err) {
       return res.status(401).send({ error: true, message: "unauthorized access" });
     }
@@ -84,8 +84,8 @@ async function run() {
       res.send(result);
     })
 
-     // Verify admin midleware
-     const verifyAdmin = async (req, res, next) => {
+    // Verify admin midleware
+    const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
       const result = await usersCollections.findOne(query);
@@ -94,9 +94,9 @@ async function run() {
       }
       next();
     }
-    
+
     /*********************  This all are the user api  start***************/
-    app.get("/users",verifyJWT,verifyAdmin, async (req, res) => {
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollections.find().toArray();
       res.send(result);
     })
@@ -105,7 +105,7 @@ async function run() {
       res.send(result);
     })
 
-    
+
 
     // single user email query for checking user role
     app.get("/users/:email", async (req, res) => {
@@ -136,12 +136,12 @@ async function run() {
       res.send(result);
     })
 
-   
+
     /*********************  This selected classes api  start***************/
 
-    app.get("/selectedClass/:id",verifyJWT,async (req,res) => {
+    app.get("/selectedClass/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const quary = {_id: new  ObjectId(id)}
+      const quary = { _id: new ObjectId(id) }
       const result = await selectedClassCollections.findOne(quary);
       res.send(result);
 
@@ -200,8 +200,8 @@ async function run() {
 
     /*********Payment INtent api call*********/
 
-     // payment getway api
-     app.post("/create-payment-intent",verifyJWT, async (req, res) => {
+    // payment getway api
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = Math.round(price * 100);
       const paymentIntent = await stripe.paymentIntents.create({
@@ -216,21 +216,34 @@ async function run() {
 
     // payment info data post api
 
-    app.post('/payments', verifyJWT, async(req, res) =>{
+    app.post('/payments', verifyJWT, async (req, res) => {
       const paymentInfo = req.body;
-      const insertResult = await  paymentsCollections.insertOne(paymentInfo);
+      const insertResult = await paymentsCollections.insertOne(paymentInfo);
       const updateResult = await classessCollections.updateOne(
-        { _id: new ObjectId(paymentInfo.classId) }, 
-        { $inc: { seats: -1, enrollStudent: 1 } } 
+        { _id: new ObjectId(paymentInfo.classId) },
+        { $inc: { seats: -1, enrollStudent: 1 } }
       );
 
       const deleteResult = await selectedClassCollections.deleteOne(
         { _id: new ObjectId(paymentInfo.selectedClassID) } // Specify the filter criteria
       );
 
-      res.send({ insertResult,updateResult,deleteResult });
+      res.send({ insertResult, updateResult, deleteResult });
     })
 
+
+    /********** Enrol CLasses Get api call***********/
+
+    app.get("/enrollClass/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        res.send({ message: "unauthorized" });
+      }
+      const query = { email: email }
+      const result = await paymentsCollections.find(query).toArray();
+      res.send(result);
+
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
