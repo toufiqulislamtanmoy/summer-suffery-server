@@ -59,9 +59,43 @@ async function run() {
       const token = jwt.sign(user, process.env.SECRECT_TOKEN, { expiresIn: "1h" });
       res.send({ token });
     })
+
+    // Check the user is admin or not
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        res.send({ admin: false });
+      }
+      const query = { email: email };
+      const user = await usersCollections.findOne(query);
+      const result = { admin: user?.role === 'admin' }
+      res.send(result);
+    })
+    // Check the user is instructor or not
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        res.send({ admin: false });
+      }
+      const query = { email: email };
+      const user = await usersCollections.findOne(query);
+      const result = { instructor: user?.role === 'instructor' }
+      res.send(result);
+    })
+
+     // Verify admin midleware
+     const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const result = await usersCollections.findOne(query);
+      if (result?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: "forbidden access" });
+      }
+      next();
+    }
     
     /*********************  This all are the user api  start***************/
-    app.get("/users",verifyJWT, async (req, res) => {
+    app.get("/users",verifyJWT,verifyAdmin, async (req, res) => {
       const result = await usersCollections.find().toArray();
       res.send(result);
     })
