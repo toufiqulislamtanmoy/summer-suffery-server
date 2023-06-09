@@ -245,6 +245,21 @@ async function run() {
 
     })
 
+// payment history api call
+    app.get("/paymentHistory/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        res.send({ message: "unauthorized" });
+        return;
+      }
+      
+      const query = { email: email };
+      const projection = { date: 1, className: 1, transactionId: 1, price: 1 };
+      const result = await paymentsCollections.find(query).project(projection).toArray();
+      res.send(result);
+    });
+    
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
