@@ -10,9 +10,27 @@ const port = process.env.PORT || 5000
 app.use(cors());
 app.use(express.json());
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "unauthorized access" });
+  }
+  const token = authorization.split(' ')[1];
+  jwt.verify(token, process.env.SECRECT_TOKEN, (err, decoded) => {
+    
+    if (err) {
+      return res.status(401).send({ error: true, message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
 app.get("/", (req, res) => {
   res.send("Class Is Enrolling")
 })
+
+
 
 // mongodb 
 
@@ -34,12 +52,6 @@ async function run() {
     const usersCollections = client.db("summer-suffery").collection("users");
     const classessCollections = client.db("summer-suffery").collection("classess");
     const selectedClassCollections = client.db("summer-suffery").collection("selectedClass");
-    /*********************  This all are the user api  start***************/
-    app.get("/users", async (req, res) => {
-      const result = await usersCollections.find().toArray();
-      res.send(result);
-    })
-
     /**********Generate JWT token*********/
 
     app.post('/jwt', (req, res) => {
@@ -47,6 +59,14 @@ async function run() {
       const token = jwt.sign(user, process.env.SECRECT_TOKEN, { expiresIn: "1h" });
       res.send({ token });
     })
+    
+    /*********************  This all are the user api  start***************/
+    app.get("/users",verifyJWT, async (req, res) => {
+      const result = await usersCollections.find().toArray();
+      res.send(result);
+    })
+
+    
 
     // single user email query for checking user role
     app.get("/users/:email", async (req, res) => {
