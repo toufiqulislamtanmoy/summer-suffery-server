@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_TOKEN);
 const port = process.env.PORT || 5000
 
 app.use(cors());
@@ -130,7 +130,17 @@ async function run() {
       const result = await classessCollections.find().toArray();
       res.send(result);
     })
+
+   
     /*********************  This selected classes api  start***************/
+
+    app.get("/selectedClass/:id",async (req,res) => {
+      const id = req.params.id;
+      const quary = {_id: new  ObjectId(id)}
+      const result = await selectedClassCollections.findOne(quary);
+      res.send(result);
+
+    })
     // get selected class by email 
     app.get('/selectedClass', async (req, res) => {
       const email = req.query.email;
@@ -182,6 +192,25 @@ async function run() {
       res.send(result);
     })
     /*********************  This all are the user api  end***************/
+
+    /*********Payment INtent api call*********/
+
+     // payment getway api
+     app.post("/create-payment-intent",verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = Math.round(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    })
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
