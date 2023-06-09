@@ -53,6 +53,7 @@ async function run() {
     const classessCollections = client.db("summer-suffery").collection("classess");
     const selectedClassCollections = client.db("summer-suffery").collection("selectedClass");
     const paymentsCollections = client.db("summer-suffery").collection("payments");
+    const feedbackCollections = client.db("summer-suffery").collection("feedback");
     /**********Generate JWT token*********/
 
     app.post('/jwt', (req, res) => {
@@ -258,10 +259,16 @@ async function run() {
       const result = await paymentsCollections.find(query).project(projection).toArray();
       res.send(result);
     });
-    
+
+    // user feedback
+
+    app.get("/feedback",async (req,res) =>{
+      const result = await feedbackCollections.find().toArray();
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    await client.db("adfmin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
