@@ -91,7 +91,17 @@ async function run() {
       const query = { email: email };
       const result = await usersCollections.findOne(query);
       if (result?.role !== 'admin') {
-        return res.status(403).send({ error: true, message: "forbidden access" });
+        return res.status(401).send({ error: true, message: "forbidden access" });
+      }
+      next();
+    }
+    // Verify instructor midleware
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const result = await usersCollections.findOne(query);
+      if (result?.role !== 'instructor') {
+        return res.status(401).send({ error: true, message: "forbidden access" });
       }
       next();
     }
@@ -136,6 +146,20 @@ async function run() {
       const result = await classessCollections.find().toArray();
       res.send(result);
     })
+    //add new classes post api call
+    app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
+      const classDetails = req.body;
+      const result = await classessCollections.insertOne(classDetails);
+      res.send(result);
+    })
+    // get class details by instructor email
+    app.get("/classes/instructor/:email", verifyJWT,verifyInstructor,async (req, res) => {
+      const email = req.params.email;
+      const query = { instructorEmail: email };
+      const result = await classessCollections.find(query).toArray();
+      res.send(result);
+    });
+
 
 
     /*********************  This selected classes api  start***************/
@@ -246,14 +270,14 @@ async function run() {
 
     })
 
-// payment history api call
+    // payment history api call
     app.get("/paymentHistory/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded.email) {
         res.send({ message: "unauthorized" });
         return;
       }
-      
+
       const query = { email: email };
       const projection = { date: 1, className: 1, transactionId: 1, price: 1 };
       const result = await paymentsCollections.find(query).project(projection).toArray();
@@ -262,7 +286,7 @@ async function run() {
 
     // user feedback
 
-    app.get("/feedback",async (req,res) =>{
+    app.get("/feedback", async (req, res) => {
       const result = await feedbackCollections.find().toArray();
       res.send(result);
     })
