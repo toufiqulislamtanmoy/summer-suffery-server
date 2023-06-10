@@ -154,7 +154,9 @@ async function run() {
     })
 
 
-    app.patch("/classes/approve/:id",verifyJWT,verifyAdmin,async (req,res) => {
+
+    // approve class api call
+    app.patch("/classes/approve/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -165,9 +167,83 @@ async function run() {
       const result = await classessCollections.updateOne(query, updateDoc);
       res.send(result);
     })
+    // deny class api call
+    app.patch("/classes/deny/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "deny"
+        },
+      };
+      const result = await classessCollections.updateOne(query, updateDoc);
+      res.send(result);
+    })
+    // feedback class api call
+    app.patch("/classes/feedback/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const { feedback } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: feedback
+        },
+      };
+      const result = await classessCollections.updateOne(query, updateDoc);
+      res.send(result);
+    })
+
+    // sort by popular class 
+    app.get("/popularClass", async (req, res) => {
+      const options = {
+        sort: { enrollStudent: -1 }
+      };
+      const result = await classessCollections.find({}, options).toArray();
+      res.send(result)
+    })
+
+    /*** 
+     * popular instructor based on the enroll student  
+     * use aggregate to find the overall enroll number
+     * then find the instructor infromation based on the email in the class collection
+     * ****/
+
+    app.get("/popularInstructor", async (req,res) => {
+      const result = await classessCollections.aggregate([
+        {
+          $group: {
+            _id: {
+              instructor: "$instructor",
+              email: "$instructorEmail"
+            },
+            totalEnrollments: { $sum: "$enrollStudent" }
+          }
+        },
+        {
+          $sort: { totalEnrollments: -1 }
+        }
+      ]).toArray();
+  
+      const formattedResult = [];
+  
+      for (const { _id, totalEnrollments } of result) {
+        const {email } = _id;
+        const query = { email: email };
+        const instructorDetails = await usersCollections.findOne(query);
+  
+        if (instructorDetails) {
+          formattedResult.push({
+            totalEnrollments,
+            instructorDetails
+          });
+        }
+       
+      }
+      res.send(formattedResult);
+    })
 
     // get class details by instructor email
-    app.get("/classes/instructor/:email", verifyJWT,verifyInstructor,async (req, res) => {
+    app.get("/classes/instructor/:email", verifyJWT, verifyInstructor, async (req, res) => {
       const email = req.params.email;
       const query = { instructorEmail: email };
       const result = await classessCollections.find(query).toArray();
