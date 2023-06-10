@@ -152,6 +152,20 @@ async function run() {
       const result = await classessCollections.insertOne(classDetails);
       res.send(result);
     })
+
+
+    app.patch("/classes/approve/:id",verifyJWT,verifyAdmin,async (req,res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approve"
+        },
+      };
+      const result = await classessCollections.updateOne(query, updateDoc);
+      res.send(result);
+    })
+
     // get class details by instructor email
     app.get("/classes/instructor/:email", verifyJWT,verifyInstructor,async (req, res) => {
       const email = req.params.email;
@@ -174,7 +188,6 @@ async function run() {
     // get selected class by email 
     app.get('/selectedClass', async (req, res) => {
       const email = req.query.email;
-      console.log(email);
       const query = { email: email }
       const result = await selectedClassCollections.find(query).toArray();
       res.send(result);
