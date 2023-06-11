@@ -48,7 +48,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    client.connect();
     const usersCollections = client.db("summer-suffery").collection("users");
     const classessCollections = client.db("summer-suffery").collection("classess");
     const selectedClassCollections = client.db("summer-suffery").collection("selectedClass");
@@ -105,6 +105,27 @@ async function run() {
       }
       next();
     }
+
+    app.get("/role/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+
+      const options = {
+        projection: { role: 1 }
+      };
+      
+      const result = await usersCollections.findOne(query, options);
+      // if(result !== null){
+      //   const { role } = result; // Extract the role field
+      //   res.send({ role });
+      // }else{
+      //   res.send({})
+      // }
+      res.send(result);
+
+    });
+
+
 
     /*********************  This all are the user api  start***************/
     app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
@@ -208,7 +229,7 @@ async function run() {
      * then find the instructor infromation based on the email in the class collection
      * ****/
 
-    app.get("/popularInstructor", async (req,res) => {
+    app.get("/popularInstructor", async (req, res) => {
       const result = await classessCollections.aggregate([
         {
           $group: {
@@ -223,21 +244,21 @@ async function run() {
           $sort: { totalEnrollments: -1 }
         }
       ]).toArray();
-  
+
       const formattedResult = [];
-  
+
       for (const { _id, totalEnrollments } of result) {
-        const {email } = _id;
+        const { email } = _id;
         const query = { email: email };
         const instructorDetails = await usersCollections.findOne(query);
-  
+
         if (instructorDetails) {
           formattedResult.push({
             totalEnrollments,
             instructorDetails
           });
         }
-       
+
       }
       res.send(formattedResult);
     })
@@ -286,7 +307,7 @@ async function run() {
 
     /*********************  make admin ***************/
 
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -299,7 +320,7 @@ async function run() {
     })
     /*********************  make instructor ***************/
 
-    app.patch('/users/instructor/:id', async (req, res) => {
+    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
