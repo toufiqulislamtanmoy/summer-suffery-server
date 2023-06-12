@@ -389,8 +389,17 @@ async function run() {
       }
 
       const query = { email: email };
-      const projection = { date: 1, className: 1, transactionId: 1, price: 1 };
-      const result = await paymentsCollections.find(query).project(projection).toArray();
+
+      const options = {
+        sort: { date: -1 },
+        // Include only the `title` and `imdb` fields in each returned document
+        projection: { date: 1, className: 1, transactionId: 1, price: 1},
+      };
+
+
+      // const projection = { date: 1, className: 1, transactionId: 1, price: 1 };
+      const result = await paymentsCollections.find(query,options).toArray();
+      // const result = await paymentsCollections.find(query).project(projection).toArray();
       res.send(result);
     });
 
