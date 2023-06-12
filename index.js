@@ -399,7 +399,6 @@ async function run() {
 
       // const projection = { date: 1, className: 1, transactionId: 1, price: 1 };
       const result = await paymentsCollections.find(query,options).toArray();
-      // const result = await paymentsCollections.find(query).project(projection).toArray();
       res.send(result);
     });
 
